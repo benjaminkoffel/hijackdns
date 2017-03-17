@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-
 import dns.query
 import dns.resolver
 import dns.exception
@@ -43,11 +42,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target-domain', help='target base domain')
 parser.add_argument('-p', '--public-dns', help='public DNS', default='8.8.8.8')
 parser.add_argument('-s', '--subdomain-list', help='file containing a list of subdomains')
+parser.add_argument('-a', '--append', help='append to target base domain', action='store_true', default=False)
 args = parser.parse_args()
+
+print('ap', args.append)
 
 with open(args.subdomain_list) as list_file:
     subdomains = list_file.readlines()
-subdomains = [x.strip() for x in subdomains]
+subdomains = [x.strip('.,\n\t ') for x in subdomains]
 
 print('authoritative nameservers:')
 authoritative_nameservers = list_authoritative_nameservers(args.public_dns, args.target_domain)
@@ -56,7 +58,9 @@ for nameserver in authoritative_nameservers:
 print('')
 
 for subdomain in subdomains:
-    domain = subdomain + '.' + args.target_domain
+    domain = subdomain
+    if args.append == True:
+        domain = subdomain + '.' + args.target_domain
     print(domain, end=' ')
     public_ns_status = check_ns_record(args.public_dns, domain)
     print(public_ns_status, end=' ')
