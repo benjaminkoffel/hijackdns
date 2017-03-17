@@ -6,9 +6,9 @@ import dns.exception
 import argparse
 import socket
 
-def list_authoritative_nameservers(nameservers, domain):
+def list_authoritative_nameservers(nameserver, domain):
     resolver = dns.resolver.Resolver()
-    resolver.nameservers = nameservers
+    resolver.nameservers = [nameserver]
     resolver.timeout = 5
     resolver.lifetime = 5
     authoritative_nameservers = []
@@ -16,9 +16,9 @@ def list_authoritative_nameservers(nameservers, domain):
         authoritative_nameservers.append(rdata.target.to_text())
     return authoritative_nameservers
 
-def check_ns_record(nameservers, domain, attempts=3):
+def check_ns_record(nameserver, domain, attempts=3):
     resolver = dns.resolver.Resolver()
-    resolver.nameservers = nameservers
+    resolver.nameservers = [nameserver]
     resolver.timeout = 1
     resolver.lifetime = 1
     try:
@@ -49,10 +49,8 @@ with open(args.subdomain_list) as list_file:
     subdomains = list_file.readlines()
 subdomains = [x.strip() for x in subdomains]
 
-public_nameservers = [args.public_dns]
-
 print('authoritative nameservers:')
-authoritative_nameservers = list_authoritative_nameservers(public_nameservers, args.target_domain)
+authoritative_nameservers = list_authoritative_nameservers(args.public_dns, args.target_domain)
 for nameserver in authoritative_nameservers:
     print(nameserver)
 print('')
@@ -60,10 +58,10 @@ print('')
 for subdomain in subdomains:
     domain = subdomain + '.' + args.target_domain
     print(domain, end=' ')
-    public_ns_status = check_ns_record(public_nameservers, domain)
+    public_ns_status = check_ns_record(args.public_dns, domain)
     print(public_ns_status, end=' ')
     if public_ns_status == 'SERVFAIL':
-        authoritative_ns_status = check_ns_record(authoritative_nameservers, domain)
+        authoritative_ns_status = check_ns_record(socket.gethostbyname(authoritative_nameservers[0]), domain)
         print(authoritative_ns_status, end=' ')
         if authoritative_ns_status == 'INNS':
             print('--- VULNERABLE ---', end='')
