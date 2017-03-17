@@ -30,6 +30,8 @@ def check_ns_record(nameserver, domain, attempts=3):
     except dns.exception.DNSException as e:
         if 'SERVFAIL' in e.msg:
             return 'SERVFAIL'
+        if 'REFUSED' in e.msg:
+            return 'REFUSED'
         elif 'IN NS' in e.msg:
             return 'INNS'
         elif 'None of DNS query names exist' in e.msg:
@@ -47,7 +49,7 @@ def check_domain_for_ns_hijack(public_dns, nameserver, domain):
     print(domain, end=' ')
     public_ns_status = check_ns_record(public_dns, domain)
     print(public_ns_status, end=' ')
-    if public_ns_status == 'SERVFAIL':
+    if public_ns_status == 'SERVFAIL' or public_ns_status == 'REFUSED':
         authoritative_ns_status = check_ns_record(nameserver, domain)
         print(authoritative_ns_status, end=' ')
         if authoritative_ns_status == 'INNS':
