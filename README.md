@@ -9,4 +9,7 @@ py .\hijackdns.py -t domain.com -s .\nslist.txt
 
 # check also but append subdomain list to target domain
 py .\hijackdns.py -t domain.com -s .\subdomains.txt -a
+
+# check zone and recordset data straight from Route53 (requires AWS auth)
+py .\hijackdns.py -r
 ```
