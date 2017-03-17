@@ -41,13 +41,13 @@ def check_ns_record(nameserver, domain, attempts=3):
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target-domain', help='target base domain')
 parser.add_argument('-p', '--public-dns', help='public DNS', default='8.8.8.8')
-parser.add_argument('-s', '--subdomain-list', help='file containing a list of subdomains')
-parser.add_argument('-a', '--append', help='append to target base domain', action='store_true', default=False)
+parser.add_argument('-l', '--list', help='file containing a list of domains or subdomains')
+parser.add_argument('-a', '--append', help='append to list items to target domain', action='store_true', default=False)
 args = parser.parse_args()
 
 print('ap', args.append)
 
-with open(args.subdomain_list) as list_file:
+with open(args.list) as list_file:
     subdomains = list_file.readlines()
 subdomains = [x.strip('.,\n\t ') for x in subdomains]
 
