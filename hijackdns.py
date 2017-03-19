@@ -23,8 +23,8 @@ def list_authoritative_nameservers(nameserver, domain):
 def check_ns_record(nameserver, domain, attempts=3):
     resolver = dns.resolver.Resolver()
     resolver.nameservers = [nameserver]
-    resolver.timeout = 1
-    resolver.lifetime = 1
+    resolver.timeout = 5
+    resolver.lifetime = 5
     try:
         resolver.query(domain, 'NS')
     except dns.exception.DNSException as e:
@@ -38,7 +38,7 @@ def check_ns_record(nameserver, domain, attempts=3):
             return 'NOTFOUND'
         elif 'timed out' in e.msg:
             if attempts > 0:
-                check_ns_record(nameservers, domain, attempts - 1)
+                return check_ns_record(nameserver, domain, attempts - 1)
             else:
                 return 'TIMEOUT'
         else:
@@ -53,7 +53,7 @@ def check_domain_for_ns_hijack(public_dns, nameserver, domain):
         authoritative_ns_status = check_ns_record(nameserver, domain)
         print(authoritative_ns_status, end=' ')
         if authoritative_ns_status == 'INNS':
-            print('--- VULNERABLE ---', end='')
+            print('---VULNERABLE---', end='')
     print('')
 
 def scan_hostedzone(target_domain, public_dns, append, domain_list):
@@ -66,8 +66,8 @@ def scan_hostedzone(target_domain, public_dns, append, domain_list):
         nameserver = socket.gethostbyname(authoritative_nameservers[0])
         print('\ntesting NS records:')
         for domain in domain_list:
-            if args.append == True:
-                domain = subdomain + '.' + target_domain
+            if append == True:
+                domain = domain + '.' + target_domain
             check_domain_for_ns_hijack(public_dns, nameserver, domain)
 
 parser = argparse.ArgumentParser()
