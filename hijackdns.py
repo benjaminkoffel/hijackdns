@@ -46,7 +46,7 @@ def check_ns_record(nameserver, domain, attempts=3):
     return 'OK'
 
 def check_domain_for_ns_hijack(public_dns, nameserver, domain):
-    print(domain, end=' ')
+    print(domain, '@', nameserver, end=' ')
     public_ns_status = check_ns_record(public_dns, domain)
     print(public_ns_status, end=' ')
     if public_ns_status == 'SERVFAIL' or public_ns_status == 'REFUSED':
@@ -69,6 +69,22 @@ def scan_hostedzone(target_domain, public_dns, append, domain_list):
             if append == True:
                 domain = domain + '.' + target_domain
             check_domain_for_ns_hijack(public_dns, nameserver, domain)
+
+def scan_hostedzone_dynamic(public_dns, append, domain_list):
+    print('\ntesting NS records:')
+    nameservers = {}
+    for domain in domain_list:
+        parts = domain.split('.')
+        for i in range(1, len(parts)):
+            target_domain = '.'.join(parts[i:])
+            if target_domain not in nameservers:
+                ns = list_authoritative_nameservers(public_dns, target_domain)
+                if not ns:
+                    continue
+                nameservers[target_domain] = socket.gethostbyname(ns[0])
+            print(target_domain, end=': ')
+            check_domain_for_ns_hijack(public_dns, nameservers[target_domain], domain)
+            break
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--target-domain', help='target base domain')
@@ -94,6 +110,12 @@ elif args.target_domain and args.list:
         domain_list = list_file.readlines()
     domain_list = [x.strip('.,\n\t ') for x in domain_list]
     scan_hostedzone(args.target_domain, args.public_dns, args.append, domain_list)
+
+elif args.list:
+    with open(args.list) as list_file:
+        domain_list = list_file.readlines()
+    domain_list = [x.strip('.,\n\t ') for x in domain_list]
+    scan_hostedzone_dynamic(args.public_dns, args.append, domain_list)
 
 else:
     print(parser.usage)
